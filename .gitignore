@@ -2,6 +2,7 @@
 # data and results folder 
 data/
 results/
+best_model/
 
 # data files 
 *.csv

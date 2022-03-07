@@ -1,13 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb 25 11:32:52 2022
-
-@author: lilowagner
-"""
+"""Module scam_trainer -- class ScamTrainer: train, document and save Bert-like pytorch model."""
 
 
-#import tensorflow as tf 
 import torch
 import torch.nn as nn
 import pandas as pd 
@@ -30,13 +23,34 @@ def set_seed(seed):
 
 
 class ScamTrainer:
+    """Classification for scam/non-scam SMS. 
+    
+    Attrs:
+        args (dict): Contains specifications of training parameters, namely: 
+                - model_type: str in ['bert', 'electra', 'roberta']. Defaults to 'bert'.
+                - intermediate_task: None or 'yes'. If 'yes', initialized weights correspond to intermediate task training on MNLI task. Defaults to None
+                - learning_rate: float; defaults to 2e-5
+                - batch_size: defaults to 32
+                - warmup_ratio: % of training steps during which learning rate is increasing, before decreasing. Defaults to 0.1
+                - num_epochs: number of epochs that model is trained. Defaults to 4
+                - classifer_dropout: droupout ratio in classification layer. Defaults to 0.1
+                - reinit_layers: number of top layers to reinitialize. If greater than 0, pooling layer is also initialized. Defaults to 0 
+
+    Methods: 
+        fit(train_dataset, val_dataset, feature_col = 'text', target_col = 'target_orig', seed = 100): 
+            trains model on train_dataset, and records accuracy and loss of both train_dataset and val_dataset. Can be trained on different seeds. 
+        save_best_model(output_dir = './model_save/'): 
+            saves best model among trained models.
+
+    """
+    
     def __init__(self, args = {}): 
         assert isinstance(args, dict), 'args must be of type dict'
         self.args = args
         self.model_type = args.get('model_type', 'bert').lower()
         self.int_task = args.get('intermediate_task', None)
         self.learning_rate = args.get('learning_rate', 2e-5)
-        self.batch_size = args.get('batch_size', 16)
+        self.batch_size = args.get('batch_size', 32)
         #self.seed = args.get('seed', 100)
         self.warmup_ratio = args.get('warmup_ratio', 0.1)
         self.num_epochs = args.get('num_epochs', 4)
@@ -60,8 +74,8 @@ class ScamTrainer:
             assert isinstance(self.reinit_layers, int)
             if self.reinit_layers < 0: 
                 raise ValueError
-        
         self.model = None
+        self.tokenizer = None
         self.best_model = None
         self.best_loss = float('inf')
         if torch.cuda.is_available(): 
@@ -76,12 +90,12 @@ class ScamTrainer:
         assert feature_col in dataset.columns, 'feature_col not found in dataset'
         assert target_col in dataset.columns, 'target_col not found in dataset'
         if self.model_type == 'bert': 
-            tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         elif self.model_type == 'electra': 
-            tokenizer = ElectraTokenizer.from_pretrained('google/electra-base-discriminator')
+            self.tokenizer = ElectraTokenizer.from_pretrained('google/electra-base-discriminator')
         else: 
-            tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
-        encoded_data = tokenizer.batch_encode_plus(
+            self.tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
+        encoded_data = self.tokenizer.batch_encode_plus(
             dataset[feature_col].values, 
             add_special_tokens=True, 
             return_attention_mask=True, 
@@ -141,15 +155,15 @@ class ScamTrainer:
     def _reinit_layer_weights(self): 
         if not self.model: 
             raise NotImplementedError
-        encoder_temp = getattr(self.model, self.model_type) #encoder_temp = BertModel
-        if self.model_type in ["bert", "roberta"]: #apparently, electra does not have a pooler 
+        encoder_temp = getattr(self.model, self.model_type) #encoder_temp = BertModel, RobertaModel
+        if self.model_type in ["bert"]: #apparently, electra and roberta do not have a pooler 
             print('reinitializing pooler...')
             encoder_temp.pooler.dense.weight.data.normal_(mean=0.0, std=encoder_temp.config.initializer_range)
             encoder_temp.pooler.dense.bias.data.zero_()
             for p in encoder_temp.pooler.parameters():
                 p.requires_grad = True
-        for layer in encoder_temp.encoder.layer[-self.reinit_layers :]:
-            print('reinitializing layer {}...'.format(layer))
+        for layer in encoder_temp.encoder.layer[-self.reinit_layers:]:
+            #print('reinitializing layer {}...'.format(layer))
             for module in layer.modules():
                 if isinstance(module, (nn.Linear, nn.Embedding)):
                     module.weight.data.normal_(mean=0.0, std=encoder_temp.config.initializer_range)
@@ -281,28 +295,6 @@ class ScamTrainer:
         print("Saving model to %s" % output_dir)
         model_to_save = self.best_model.module if hasattr(self.best_model, 'module') else self.best_model  # Take care of distributed/parallel training
         model_to_save.save_pretrained(output_dir)
-        
-
-
-############### Usage ################
-    
-# args = {'model_type': 'bert', #choose from ['bert', 'electra', 'roberta']
-#         'intermediate_task': None, #alternatively, give some value like 1, or 'yes' 
-#         'learing_rate': 2e-5, 
-#         'batch_size': 16,  
-#         'warmup_ratio': 0.1, 
-#         'num_epochs': 4, 
-#         'classifier_dropout': 0.1,
-#         'reinit_layers': 0}
-
-##load data 
-# data_dir = args['data_dir']
-# train_data = 'train.csv'
-# val_data = 'val.csv'
-# train = pd.read_csv(data_dir + train_data)
-# val = pd.read_csv(data_dir + val_data)
-
-# trainer = ScamTrainer(args)
-# trainer.fit(train, val, seed = [10, 100, 1000])
+        self.tokenizer.save_pretrained(output_dir)
 
 

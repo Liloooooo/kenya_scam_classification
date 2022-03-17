@@ -18,7 +18,8 @@ The original data is not provided here.
 
 ### Data preprocessing 
 
-In command line: 
+In command line, where INPUT_PATH is the path to an .xlsx file with columns 'text' and 'target_orig' (Labels in 0/1 format):  
+
 `python data_preprocessing.py --input_path INPUT_PATH --output_dir OUTPUT_DIRECTORY`
 
 ### Training 

@@ -41,5 +41,16 @@ args = {'model_type': 'electra',
          'reinit_layers': 0}
 
 trainer = ScamTrainer(args)
-trainer.fit(train_dataset=train, val_dataset=val, seed=[80])
+trainer.fit(train_dataset=train, val_dataset=val, seed=[80])```
 
+### Evaluation 
+
+```
+from scam_evaluator import ScamEvaluator
+import pandas as pd
+
+evaluator = ScamEvaluator(model_dir)
+test = pd.read_csv('test.csv')
+_, test_acc = evaluator.evaluate(test, feature_col='text', target_col='target_orig')
+predictions = evaluator.predict_proba(test, feature_col='text', target_col='target_orig')
+```

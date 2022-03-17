@@ -45,7 +45,7 @@ trainer = ScamTrainer(args)
 trainer.fit(train_dataset=train, val_dataset=val, seed=[80, 800, 8000])
 ```
 
-### Evaluation 
+### Evaluation/Prediction
 
 ```
 from scam_evaluator import ScamEvaluator

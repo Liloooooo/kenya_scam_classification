@@ -23,12 +23,12 @@ class ScamEvaluator:
         model_path (str): path to model, saved with Huggingface's .save_pretrained() method.
 
     Methods:
-        evaluate(test_dataset, feature_col = 'text', target_col = 'target_orig'):
+        evaluate(test_dataset, feature_col='text', target_col='target_orig'):
             returns and prints loss and accuracy of text/label combinations.
             Takes in a pandas dataframe.
-        predict_proba(test_dataset, feature_col = 'text'):
+        predict_proba(test_dataset, feature_col='text'):
             returns predicted probability array. Takes in a pandas dataframe.
-        predict_labels(test_dataset, feature_col = 'text'):
+        predict_labels(test_dataset, feature_col='text'):
             returns predicted labels array. Takes in a pandas dataframe.
 
     """
@@ -68,16 +68,18 @@ class ScamEvaluator:
         with_labels=True,
     ):
         # tokenizes text in pandas dataframe and returns a tensor dataset with columns input_ids, attention_mask and labels (if with_labels)
-        if with_labels: 
+        if with_labels:
             assert isinstance(
                 test_dataset, pd.DataFrame
             ), "dataset must be a pandas DataFrame."
             assert (
                 target_col in test_dataset.columns
             ), "target_col not found in dataset"
-        else: 
-            assert isinstance(test_dataset, (list, pd.DataFrame)), 'input must be pandas DataFrame or list'
-            test_dataset = pd.DataFrame(test_dataset, columns = [feature_col])
+        else:
+            assert isinstance(
+                test_dataset, (list, pd.DataFrame)
+            ), "input must be pandas DataFrame or list"
+            test_dataset = pd.DataFrame(test_dataset, columns=[feature_col])
         assert (
             feature_col in test_dataset.columns
         ), "feature_col not found in dataset"
@@ -111,25 +113,22 @@ class ScamEvaluator:
         # converts tensor dataset into batches
         test_dataloader = DataLoader(
             test_data,  # tensor dataset
-            sampler=SequentialSampler(
-                test_data
-            ),  
-            batch_size=32,  
+            sampler=SequentialSampler(test_data),
+            batch_size=32,
         )
         return test_dataloader
 
     def evaluate(
         self, test_dataset, feature_col="text", target_col="target_orig"
     ):
-        """Evaluates and prints loss and accuracy for a labeled pandas dataframe.
+        """Evaluate and print loss and accuracy for a labeled pandas dataframe.
 
         Args:
             test_dataset (pandas dataframe):
-                dataset to be evaluated.
-                Contains a text column and a label column.
-            feature_col (str):
+                dataset to be evaluated. Contains a text column and a label column.
+            feature_col (str, optional):
                 name of the text column. Defaults to 'text'
-            target_col (str):
+            target_col (str, optional):
                 name of the label column. Labels are 0 (no scam) or 1 (scam).
                 Defaults to 'target_orig'.
 
@@ -214,13 +213,13 @@ class ScamEvaluator:
         return np.array(probs), np.array(labels)
 
     def predict_proba(self, test_dataset, feature_col="text"):
-        """Predicts probabilities.
+        """Predict probabilities.
 
         Args:
             test_dataset (pandas dataframe):
                 dataset to be evaluated. Contains a text column.
-            feature_col (str):
-                name of the text column. Defaults to 'text'
+            feature_col (str, optional):
+                name of the text column. Defaults to 'text'.
 
         Returns:
             predicted_probabilities (numpy array)
@@ -230,13 +229,13 @@ class ScamEvaluator:
         return self._predict(test_dataset, feature_col=feature_col)[0]
 
     def predict_labels(self, test_dataset, feature_col="text"):
-        """Predicts labels.
+        """Predict labels.
 
         Args:
             test_dataset (pandas dataframe):
                 dataset to be evaluated. Contains a text column.
-            feature_col (str):
-                name of the text column. Defaults to 'text'
+            feature_col (str, optional):
+                name of the text column. Defaults to 'text'.
 
         Returns:
             predicted_labels (numpy array)

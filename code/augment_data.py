@@ -22,26 +22,23 @@ def augment_text(
     """Text augmentation by synonym replacement.
 
     Args:
-        dataset : pandas.DataFrame
-            Columns are named 'text' and 'target_orig' (labels: 0/1)
-        augmentation_type : str, optional
-            'contextual': synonym replacement based on contextual word representations in bert-base-uncased,
+        dataset (pandas.DataFrame): column names 'text', 'target_orig' (labels: 0/1)
+        augmentation_type (str, optional): 
+            'contextual': synonym replacement based on contextual word 
+                            representations in bert-base-uncased
             'synonym_dict': substituted words are taken from WordNet.
             Defaults to 'contextual'.
-        samples_0 : int, optional
-            Number of 0-labelled texts to add to original dataset.
-            Defaults to 0.
-        samples_1 : int, optional
-            Number of 1-labelled texts to add to original dataset.
-            Defaults to 0.
-        aug_p : float, optional
+        samples_0 (int, optional): 
+            Number of 0-labelled texts to add to original dataset. Defaults to 0.
+        samples_1 (int, optional):
+            Number of 1-labelled texts to add to original dataset. Defaults to 0.
+        aug_p (float, optional): 
             Share of words to replace. Defaults to 0.2.
-        seed : int, optional
+        seed (int, optional):
             random seed. Defaults to 10.
 
     Returns:
-        pandas.DataFrame:
-            augmented dataset, including original dataset
+        pandas.DataFrame: augmented dataset, including original dataset
 
     """
 

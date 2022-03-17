@@ -37,37 +37,37 @@ class ScamTrainer:
     """Classification for scam/non-scam SMS.
 
     Attrs:
-        args (dict): Contains specifications of training parameters, namely:
-                - model_type (str):
+        args (dict): contains specifications of training parameters, namely:
+                - model_type (str, optional):
                         ['bert', 'electra', 'roberta'].
                         Defaults to 'bert'.
-                - intermediate_task (str or integer):
+                - intermediate_task (str or integer, optional):
                         If 'yes', initialized weights correspond to
                         intermediate task training on MNLI task.
                         Defaults to None.
-                - learning_rate (float):
+                - learning_rate (float, optional):
                         Defaults to 2e-5.
-                - batch_size (int):
+                - batch_size (int, optional):
                         Defaults to 32.
-                - warmup_ratio (float):
+                - warmup_ratio (float, optional):
                         Defaults to 0.1.
-                - num_epochs (int):
+                - num_epochs (int, optional):
                         Number of epochs that model is trained.
                         Defaults to 4.
-                - classifer_dropout (float):
+                - classifer_dropout (float, optional):
                         droupout ratio in classification layer.
                         Defaults to 0.1
-                - reinit_layers (int):
+                - reinit_layers (int, optional):
                     number of top layers to reinitialize.
                     If greater than 0, pooling layer is also initialized.
                     Defaults to 0.
 
     Methods:
-        fit(train_dataset, val_dataset, feature_col = 'text', target_col = 'target_orig', seed = 100):
-            trains model on train_dataset, and records accuracy and loss of both train_dataset and val_dataset.
-            Can be trained on different seeds.
+        fit(train_dataset, val_dataset, feature_col='text', target_col='target_orig', seed=100):
+            train model on train_dataset, and records accuracy and loss of 
+            both train_dataset and val_dataset. Can be trained on different seeds.
         save_best_model(output_dir = './model_save/'):
-            saves best model among trained models.
+            save best model among trained models.
 
     """
 
@@ -238,9 +238,10 @@ class ScamTrainer:
         target_col="target_orig",
         seed=100,
     ):
-        """Fits model weights on training dataset and prints evaluation on validation dataset
-        (accuracy and binary cross entropy loss), according to arguments given in args dict.
-        Saves training summary (.xlsx) and training arguments (.json) in a directory './model_summary/'.
+        """Fit model weights on training dataset and prints evaluation on 
+        validation dataset (accuracy and binary cross entropy loss), according 
+        to arguments given in args dict. Save training summary (.xlsx) and 
+        training arguments (.json) in a directory './model_summary/'.
 
         Args:
             train_dataset (pandas dataframe):
@@ -248,15 +249,14 @@ class ScamTrainer:
             val_dataset (pandas dataframe):
                 dataset used for validation. Contains a text column and a label column.
             feature_col (str):
-                name of the text column, must be identical in train_dataset and val_dataset.
-                Defaults to 'text'.
+                name of the text column, must be identical in train_dataset 
+                and val_dataset. Defaults to 'text'.
             target_col (str):
-                name of the label column, must be identical in train_dataset and val_dataset.
-                Labels are 0 (no scam) or 1 (scam).
+                name of the label column, must be identical in train_dataset 
+                and val_dataset. Labels are 0 (no scam) or 1 (scam).
                 Defaults to 'target_orig'.
             seed (int, list of int):
-                random state for replicable results.
-                Defaults to 100.
+                random state for replicable results. Defaults to 100.
 
         """
 
@@ -288,8 +288,8 @@ class ScamTrainer:
             self.model.cuda()
             optimizer = AdamW(
                 self.model.parameters(),
-                lr=self.learning_rate,  # args.learning_rate - default is 5e-5, our notebook had 2e-5
-                eps=1e-8,  # args.adam_epsilon  - default is 1e-8.
+                lr=self.learning_rate,  
+                eps=1e-8, 
             )
             epochs = self.num_epochs
             train_dataloader, val_dataloader = self._dataloaders(
@@ -326,16 +326,12 @@ class ScamTrainer:
                         labels=b_labels,
                         return_dict=True,
                     )
-                    loss = (
-                        result.loss
-                    )  
+                    loss = result.loss
                     logits = result.logits
                     total_train_loss += loss.item()
                     logits = logits.detach().cpu().numpy()
                     label_ids = b_labels.to("cpu").numpy()
-                    total_train_accuracy += flat_accuracy(
-                        logits, label_ids
-                    )
+                    total_train_accuracy += flat_accuracy(logits, label_ids)
                     loss.backward()
                     torch.nn.utils.clip_grad_norm_(
                         self.model.parameters(), 1.0
@@ -371,9 +367,7 @@ class ScamTrainer:
                     total_val_loss += loss.item()
                     logits = logits.detach().cpu().numpy()
                     label_ids = b_labels.to("cpu").numpy()
-                    total_val_accuracy += flat_accuracy(
-                        logits, label_ids
-                    )
+                    total_val_accuracy += flat_accuracy(logits, label_ids)
                 avg_val_accuracy = total_val_accuracy / len(val_dataloader)
                 print("  Accuracy: {0:.2f}".format(avg_val_accuracy))
                 avg_val_loss = total_val_loss / len(val_dataloader)
@@ -432,7 +426,8 @@ class ScamTrainer:
             )
 
     def save_best_model(self, output_dir="./model_save/"):
-        """Saves model and tokenizer with lowest validation loss in directory output_dir.
+        """Save model and tokenizer with lowest validation loss in directory 
+        output_dir.
 
         Args:
             output_dir (str):

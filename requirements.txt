@@ -1,0 +1,8 @@
+nlpaug==1.1.10
+nltk==3.7
+pandas==1.4.1
+sklearn==0.0
+tdqm==0.0.1
+torch==1.11.0
+tqdm==4.63.0
+transformers==4.17.0

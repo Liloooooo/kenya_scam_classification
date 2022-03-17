@@ -60,6 +60,9 @@ Alternatively, ScamEvaluator.predict_proba and ScamEvaluator.predict_labels take
 ```
 phrases = ['Dear member your account has been (suspended). To unlock, call/sms 0799 096453', 
            'Dear member your account has been (suspended). To unlock, go to our app and unlock']
+           
 evaluator.predict_proba(phrases)
+```
+
 
 

@@ -23,8 +23,8 @@ In command line:
 
 ### Training 
 
->`from SCAM_TRAINER import ScamTrainer
->import pandas as pd 
+>`from SCAM_TRAINER import ScamTrainer`
+>`import pandas as pd
 >
 >train = pd.read_csv('train.csv')
 >val = pd.read_csv('val.csv')

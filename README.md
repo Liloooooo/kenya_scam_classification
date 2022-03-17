@@ -18,5 +18,5 @@ The original data is not provided here.
 
 ### Data preprocessing 
 
-`python data_preprocessing.py --input_path INPUT_PATH --output_dir OUTPUT_DIRECTORY
+`python data_preprocessing.py --input_path INPUT_PATH --output_dir OUTPUT_DIRECTORY`
 

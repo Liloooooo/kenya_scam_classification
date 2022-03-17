@@ -268,7 +268,7 @@ class ScamTrainer:
             if s < 0:
                 raise ValueError
 
-        def _flat_accuracy(preds, labels):
+        def flat_accuracy(preds, labels):
             pred_flat = np.argmax(preds, axis=1).flatten()
             labels_flat = labels.flatten()
             return np.sum(pred_flat == labels_flat) / len(labels_flat)
@@ -328,12 +328,12 @@ class ScamTrainer:
                     )
                     loss = (
                         result.loss
-                    )  # tensor containing single value (get with .item() method)
+                    )  
                     logits = result.logits
                     total_train_loss += loss.item()
                     logits = logits.detach().cpu().numpy()
                     label_ids = b_labels.to("cpu").numpy()
-                    total_train_accuracy += self._flat_accuracy(
+                    total_train_accuracy += flat_accuracy(
                         logits, label_ids
                     )
                     loss.backward()
@@ -371,7 +371,7 @@ class ScamTrainer:
                     total_val_loss += loss.item()
                     logits = logits.detach().cpu().numpy()
                     label_ids = b_labels.to("cpu").numpy()
-                    total_val_accuracy += self._flat_accuracy(
+                    total_val_accuracy += flat_accuracy(
                         logits, label_ids
                     )
                 avg_val_accuracy = total_val_accuracy / len(val_dataloader)

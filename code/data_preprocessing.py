@@ -1,8 +1,11 @@
 """Data preprocessing for scam classification """
 
 import pandas as pd
+import numpy as np
 import difflib
-#from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
+import argparse 
+
 
 
 def remove_ambiguous(dataframe):
@@ -10,7 +13,7 @@ def remove_ambiguous(dataframe):
     Args:
         dataframe: pandas dataframe
     Returns:
-        reduced pandas dataframe with one col for target only
+        reduced pandas dataframe with one col for target only, dataframe containing ambiguous rows
 
     """
 
@@ -19,14 +22,16 @@ def remove_ambiguous(dataframe):
     mask_nan_orig = df.target_orig.isna()
     mask_amb = df.target_orig != df.target_check
     df = df.loc[mask_nan_orig | mask_nan | ~mask_amb, :]
+    df_amb = df.loc[mask_amb, :].reset_index(drop=True)
     df.target_orig.fillna(df.target_check, inplace=True)
     df = df.loc[:, ["text", "target_orig"]]
     df.reset_index(drop=True, inplace=True)
-    print("ambigous rows:", len(dataframe) - len(df))
-    return df
+    print("ambiguous rows:", len(dataframe) - len(df))
+    return df, df_amb
 
 
-def remove_similar(dataframe, cutoff=0.8):
+
+def remove_similar(dataframe, cutoff = 0.9):
     """Remove similar rows in pandas dataframe.
     For this purpose, difflib is used.
     Here, similarity is evaluated based on the longest substring contained the string to be compared.
@@ -36,7 +41,7 @@ def remove_similar(dataframe, cutoff=0.8):
     Args:
         dataframe (pandas dataframe):
             Column with messages to be compared is named 'text'
-        cutoff (float):
+        cutoff (float, optional):
             ratio between 0 and 1. Defaults to 0.8.
     Returns:
         pandas dataframe with rows removed
@@ -113,16 +118,43 @@ def add_similarity_score(df_similar, df_compare):
     df = pd.concat([df_sim_0, df_sim_1])
     return df.sample(frac=1).reset_index(drop=True)
 
+def process_data(input_path, output_dir = '', cutoff = 0.9): 
+    """Data preprocessing function. Read in excel_file containing all data from input_path, remove similar and ambiguous rows, 
+    split data into training, validation and test_set (76.5% / 15% / 8.5%). Add similarity_to_training_set column to validation and test set. 
+    Save train, val, test data as .csv files to output_dir
 
-#############################################USAGE#############################################
-# path = PATH
-# file = 'data_all.xlsx'  # replace by file
-# df = pd.read_excel(path + "/" + file, index_col=0)
-# df.reset_index(drop=True, inplace=True)
-# df = remove_similar(df) # remove similar, but with high cutoff 0.8
-# df = remove_ambiguous(df)
-# df_train, df_valid = train_test_split(df, test_size=0.2)
-# df_train.reset_index(drop=True, inplace=True)
-# df_valid.reset_index(drop=True, inplace=True)
-# df_valid = add_similarity_score(df_valid, df_train)
-############################################################################################
+    Args:
+        input_path (str): path to excel file containing all data with columns 'text' and 'target_orig'
+        output_dir (str, optional): path to directory where data files will be saved. Defaults to empty string.
+
+    """
+    
+    np.random.seed(100)
+    df = pd.read_excel(input_path, index_col=0)
+    df.reset_index(drop=True, inplace=True)
+    df = remove_similar(df, cutoff=cutoff)
+    df = remove_ambiguous(df)[0] 
+    df_train, df_valid = train_test_split(df, test_size=0.15)
+    df_train.reset_index(drop=True, inplace=True)
+    df_train, df_test = train_test_split(df_train, test_size=0.1)
+    df_train.reset_index(drop=True, inplace=True)
+    df_valid.reset_index(drop=True, inplace=True)
+    df_test.reset_index(drop=True, inplace=True)
+    df_valid = add_similarity_score(df_valid, df_train)
+    df_test = add_similarity_score(df_test, df_train)
+    df_train.to_csv(output_dir + 'train.csv', index=False)
+    df_valid.to_csv(output_dir + 'val.csv', index=False)
+    df_test.to_csv(output_dir + 'test.csv', index=False)
+    
+parser = argparse.ArgumentParser()
+parser.add_argument('--output_dir', type=str, required=False)
+parser.add_argument('--input_path', type=str, required=True)
+args = parser.parse_args()
+if args.output_dir: 
+    process_data(input_path=args.input_path, output_dir=args.output_dir)
+else: 
+    process_data(input_path=args.input_path)
+
+
+###USAGE in command line
+#python data_preprocessing.py --input_path PATH output_dir DIR

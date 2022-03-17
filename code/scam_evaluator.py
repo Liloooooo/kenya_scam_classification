@@ -68,16 +68,19 @@ class ScamEvaluator:
         with_labels=True,
     ):
         # tokenizes text in pandas dataframe and returns a tensor dataset with columns input_ids, attention_mask and labels (if with_labels)
-        assert isinstance(
-            test_dataset, pd.DataFrame
-        ), "dataset must be a pandas DataFrame."
-        assert (
-            feature_col in test_dataset.columns
-        ), "feature_col not found in dataset"
-        if with_labels:
+        if with_labels: 
+            assert isinstance(
+                test_dataset, pd.DataFrame
+            ), "dataset must be a pandas DataFrame."
             assert (
                 target_col in test_dataset.columns
             ), "target_col not found in dataset"
+        else: 
+            assert isinstance(test_dataset, (list, pd.DataFrame)), 'input must be pandas DataFrame or list'
+            test_dataset = pd.DataFrame(test_dataset, columns = [feature_col])
+        assert (
+            feature_col in test_dataset.columns
+        ), "feature_col not found in dataset"
         if self.model_type == "bert":
             self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         elif self.model_type == "electra":
@@ -110,8 +113,8 @@ class ScamEvaluator:
             test_data,  # tensor dataset
             sampler=SequentialSampler(
                 test_data
-            ),  # Pull out batches sequentially.
-            batch_size=32,  # Evaluate with this batch size.
+            ),  
+            batch_size=32,  
         )
         return test_dataloader
 
@@ -170,7 +173,7 @@ class ScamEvaluator:
             total_test_loss += loss.item()
             logits = logits.detach().cpu().numpy()
             label_ids = b_labels.to("cpu").numpy()
-            total_test_accuracy += self.flat_accuracy(logits, label_ids)
+            total_test_accuracy += flat_accuracy(logits, label_ids)
         avg_test_accuracy = total_test_accuracy / len(test_dataloader)
         print("  Accuracy: {0:.2f}".format(avg_test_accuracy))
         avg_test_loss = total_test_loss / len(test_dataloader)

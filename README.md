@@ -41,7 +41,8 @@ args = {'model_type': 'electra',
          'reinit_layers': 0}
 
 trainer = ScamTrainer(args)
-trainer.fit(train_dataset=train, val_dataset=val, seed=[80])```
+trainer.fit(train_dataset=train, val_dataset=val, seed=[80])
+```
 
 ### Evaluation 
 

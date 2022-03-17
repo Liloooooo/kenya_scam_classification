@@ -55,3 +55,11 @@ test = pd.read_csv('test.csv')
 _, test_acc = evaluator.evaluate(test, feature_col='text', target_col='target_orig')
 predictions = evaluator.predict_proba(test, feature_col='text', target_col='target_orig')
 ```
+
+Alternatively, ScamEvaluator.predict_proba and ScamEvaluator.predict_labels takes as input a list: 
+```
+phrases = ['Dear member your account has been (suspended). To unlock, call/sms 0799 096453', 
+           'Dear member your account has been (suspended). To unlock, go to our app and unlock']
+evaluator.predict_proba(phrases)
+
+

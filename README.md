@@ -30,9 +30,9 @@ import pandas as pd
 train = pd.read_csv('train.csv')
 val = pd.read_csv('val.csv')
 
-args = {'model_type': 'electra', #choose from ['bert', 'electra', 'roberta'], 
+args = {'model_type': 'electra',  
         'data': 'standard', 
-         'intermediate_task': None, #None/0 or 'yes'/1
+         'intermediate_task': None, 
          'learning_rate': 2e-5, 
          'batch_size': 24,
          'warmup_ratio': 0.01, 

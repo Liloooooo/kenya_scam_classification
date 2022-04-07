@@ -1,4 +1,4 @@
-"""Module scam_evaluator -- class ScamEvaluator: evaluate data and predict labels on loaded Bert-like pytorch model."""
+"""Module scam_evaluator -- class ScamEvaluator: evaluate data, predict labels/probabilities, and get Shapley values on loaded Bert-like pytorch model."""
 
 
 import torch
@@ -11,9 +11,14 @@ from transformers import (
     BertTokenizer,
     ElectraTokenizer,
     RobertaTokenizer,
+    BasicTokenizer,
 )
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
 import json
+from shap.maskers._text import Text
+from shap.utils.transformers import getattr_silent
+import shap
+import scipy as sp
 
 
 class ScamEvaluator:
@@ -30,6 +35,9 @@ class ScamEvaluator:
             returns predicted probability array. Takes in a pandas dataframe.
         predict_labels(test_dataset, feature_col='text'):
             returns predicted labels array. Takes in a pandas dataframe.
+        shap_values(data): 
+            returns shap Explanation object, containing coalitional Shapley values of tokens 
+            extracted by transformers.BasicTokenizer.  
 
     """
 
@@ -67,7 +75,8 @@ class ScamEvaluator:
         target_col="target_orig",
         with_labels=True,
     ):
-        # tokenizes text in pandas dataframe and returns a tensor dataset with columns input_ids, attention_mask and labels (if with_labels)
+        # tokenizes text in pandas dataframe, list, series or array and returns 
+        #a tensor dataset with columns input_ids, attention_mask and labels (if with_labels)
         if with_labels:
             assert isinstance(
                 test_dataset, pd.DataFrame
@@ -77,8 +86,8 @@ class ScamEvaluator:
             ), "target_col not found in dataset"
         else:
             assert isinstance(
-                test_dataset, (list, pd.DataFrame)
-            ), "input must be pandas DataFrame or list"
+                test_dataset, (list, pd.DataFrame, pd.Series, np.ndarray)
+            ), "input must be pandas DataFrame, pandas Series or list"
             test_dataset = pd.DataFrame(test_dataset, columns=[feature_col])
         assert (
             feature_col in test_dataset.columns
@@ -159,7 +168,7 @@ class ScamEvaluator:
             b_input_ids = batch[0].to(self.device)
             b_input_mask = batch[1].to(self.device)
             b_labels = batch[2].to(self.device)
-            with torch.no_grad():  # no gradient computation needed when evaluating model
+            with torch.no_grad(): 
                 result = self.model(
                     b_input_ids,
                     token_type_ids=None,
@@ -180,21 +189,17 @@ class ScamEvaluator:
         print("")
         return avg_test_loss, avg_test_accuracy
 
-    def _predict(self, test_dataset, feature_col="text"):
-        # processing and forward propagation; returns predicted_probabilities, predicted_labels as numpy arrays
+    def _predict(self, test_data, feature_col="text"):
+        # processing and forward propagation; returns predicted_probabilities 
+        # as numpy array of shape (n, 2)
         predict_tensor = self._preprocessing(
-            test_dataset, feature_col=feature_col, with_labels=False
+            test_data, feature_col=feature_col, with_labels=False
         )
         if torch.cuda.is_available():
             self.model.cuda()
         predict_dataloader = self._dataloader(predict_tensor)
         self.model.eval()
         probs = []
-        labels = []
-
-        def sigmoid(x):
-            return 1 / (1 + np.exp(-x))
-
         for batch in predict_dataloader:
             b_input_ids = batch[0].to(self.device)
             b_input_mask = batch[1].to(self.device)
@@ -206,27 +211,25 @@ class ScamEvaluator:
                     return_dict=True,
                 )
                 logits = result.logits.detach().cpu().numpy()
-                probas = sigmoid(logits[:, 1])
+                probas = sp.special.expit(logits)
                 probs += list(probas)
-                predicted_labels = np.argmax(logits, axis=1).flatten()
-                labels += list(predicted_labels)
-        return np.array(probs), np.array(labels)
+        return np.array(probs)
 
-    def predict_proba(self, test_dataset, feature_col="text"):
-        """Predict probabilities.
+    def predict_proba(self, test_data, feature_col="text"):
+        """Predict probabilities for scam.
 
         Args:
-            test_dataset (pandas dataframe):
-                dataset to be evaluated. Contains a text column.
+            test_dataset (pandas dataframe, pandas series or list of strings):
+                text data to be predicted.
             feature_col (str, optional):
-                name of the text column. Defaults to 'text'.
+                name of the text column if test_data is a dataframe. Defaults to 'text'.
 
         Returns:
             predicted_probabilities (numpy array)
 
         """
 
-        return self._predict(test_dataset, feature_col=feature_col)[0]
+        return self._predict(test_data, feature_col=feature_col)[:, 1]
 
     def predict_labels(self, test_dataset, feature_col="text"):
         """Predict labels.
@@ -242,4 +245,58 @@ class ScamEvaluator:
 
         """
 
-        return self._predict(test_dataset, feature_col=feature_col)[1]
+        return np.round(
+            self._predict(test_dataset, feature_col=feature_col)[:, 1]
+        )
+
+    def shap_values(self, data):
+        """Calculate coalitional Shapley values
+
+        Args:
+            data (pandas series, np.array or list): messages to be analyzed
+
+        Returns:
+            coalitional Shapley values (shap._explanation.Explanation object)
+
+        """
+
+        class TextMasker(Text):
+            def __init__(
+                self,
+                tokenizer=None,
+                mask_token=None,
+                collapse_mask_token="auto",
+                output_type="string",
+            ):
+                super().__init__(
+                    tokenizer=tokenizer,
+                    mask_token=mask_token,
+                    collapse_mask_token=collapse_mask_token,
+                    output_type=output_type,
+                )
+                if mask_token is None:
+                    if getattr_silent(self.tokenizer, "mask_token") is None:
+                        self.mask_token = ""
+
+        masker = TextMasker(self._custom_tokenizer)
+        explainer = shap.Explainer(
+            self._predict, masker, algorithm="partition"
+        )
+        return explainer(data)
+
+    def _custom_tokenizer(self, text, return_offsets_mapping=True):
+        # tokenizes messages according to BasicTokenizer from transformers library
+        text = text.lower()
+        wordpunct = BasicTokenizer()
+        splitted_text_list = wordpunct.tokenize(text)
+        pos_list = []
+        pos = 0
+        for item in splitted_text_list:
+            start = text.find(item, pos)
+            end = start + len(item)
+            pos_list.append((start, end))
+            pos = end
+        out = {}
+        out["input_ids"] = splitted_text_list
+        out["offset_mapping"] = pos_list
+        return out

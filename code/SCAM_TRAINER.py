@@ -64,7 +64,7 @@ class ScamTrainer:
 
     Methods:
         fit(train_dataset, val_dataset, feature_col='text', target_col='target_orig', seed=100):
-            train model on train_dataset, and records accuracy and loss of 
+            train model on train_dataset, and records accuracy and loss of
             both train_dataset and val_dataset. Can be trained on different seeds.
         save_best_model(output_dir = './model_save/'):
             save best model among trained models.
@@ -238,9 +238,9 @@ class ScamTrainer:
         target_col="target_orig",
         seed=100,
     ):
-        """Fit model weights on training dataset and prints evaluation on 
-        validation dataset (accuracy and binary cross entropy loss), according 
-        to arguments given in args dict. Save training summary (.xlsx) and 
+        """Fit model weights on training dataset and prints evaluation on
+        validation dataset (accuracy and binary cross entropy loss), according
+        to arguments given in args dict. Save training summary (.xlsx) and
         training arguments (.json) in a directory './model_summary/'.
 
         Args:
@@ -249,10 +249,10 @@ class ScamTrainer:
             val_dataset (pandas dataframe):
                 dataset used for validation. Contains a text column and a label column.
             feature_col (str):
-                name of the text column, must be identical in train_dataset 
+                name of the text column, must be identical in train_dataset
                 and val_dataset. Defaults to 'text'.
             target_col (str):
-                name of the label column, must be identical in train_dataset 
+                name of the label column, must be identical in train_dataset
                 and val_dataset. Labels are 0 (no scam) or 1 (scam).
                 Defaults to 'target_orig'.
             seed (int, list of int):
@@ -288,8 +288,8 @@ class ScamTrainer:
             self.model.cuda()
             optimizer = AdamW(
                 self.model.parameters(),
-                lr=self.learning_rate,  
-                eps=1e-8, 
+                lr=self.learning_rate,
+                eps=1e-8,
             )
             epochs = self.num_epochs
             train_dataloader, val_dataloader = self._dataloaders(
@@ -426,7 +426,7 @@ class ScamTrainer:
             )
 
     def save_best_model(self, output_dir="./model_save/"):
-        """Save model and tokenizer with lowest validation loss in directory 
+        """Save model and tokenizer with lowest validation loss in directory
         output_dir.
 
         Args:

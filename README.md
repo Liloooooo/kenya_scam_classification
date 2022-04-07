@@ -12,7 +12,7 @@ The original data is not provided here.
        and 'target_orig'. 
 - code/augment_data: data augmentation, using either contextual or vocabulary based synonym replacement 
 - code/scam_trainer.py: trains model according to defined model configurations, saves model and training statistics
-- code/scam_evaluator.py: evaluates test set and predicts labels and probabilities 
+- code/scam_evaluator.py: evaluates test set, predicts labels and probabilities and calculates Shapley values 
 
 ## Usage
 
@@ -65,5 +65,13 @@ phrases = ['Dear member your account has been (suspended). To unlock, call/sms 0
 evaluator.predict_proba(phrases)
 ```
 
+To calculate coalitional Shapley values: 
+```
+shap_values = evaluator.shap_values(test.loc[:, 'text'])
+```
+or 
+```
+shap_values = evaluator.shap_values(phrases)
+```
 
 

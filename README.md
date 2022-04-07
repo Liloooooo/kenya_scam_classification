@@ -79,4 +79,4 @@ shap_values = evaluator.shap_values(phrases)
 Shapley values are calculated using the shap PartitionExplainer. 
 Tokenization is done using transformers.BasicTokenizer, which is the tokenizer used in Bert/Electra, prior to WordPiece tokenization. 
 
-The base value is set to predicted probability of the empty string. 
+The base value is set to the predicted probability of the empty string. 

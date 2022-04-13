@@ -55,7 +55,7 @@ class ScamTrainer:
                         Number of epochs that model is trained.
                         Defaults to 4.
                 - classifer_dropout (float, optional):
-                        droupout ratio in classification layer.
+                        dropout ratio in classification layer.
                         Defaults to 0.1
                 - reinit_layers (int, optional):
                     number of top layers to reinitialize.

@@ -119,3 +119,4 @@ Shapley values are calculated using the shap PartitionExplainer.
 Tokenization is done using transformers.BasicTokenizer, which is the tokenizer used in Bert/Electra, prior to WordPiece tokenization. 
 
 The base value is set to the predicted probability of the empty string. 
+I wrote a companion article on the inner workings of the PartitionExplainer in shap, which is used in this project. The article can be found <a href="https://towardsdatascience.com/shaps-partition-explainer-for-language-models-ec2e7a6c1b77" target="_blank">here</a>.

@@ -3,7 +3,7 @@
 Text based scam classification using one of the following pretrained models: roberta, bert, electra. 
 The original data is not provided here. 
 The training code was tuned following recommendations for few-sample BERT models:
-<a href="[http://example.com/](https://arxiv.org/abs/2006.05987)" target="_blank">Zhang et. al: Revisiting Few-sample BERT Fine-tuning</a>.
+<a href="https://arxiv.org/abs/2006.05987" target="_blank">Zhang et. al: Revisiting Few-sample BERT Fine-tuning</a>.
  
 
 

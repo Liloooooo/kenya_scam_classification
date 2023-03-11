@@ -25,7 +25,7 @@ In command line, where INPUT_PATH is the path to an .xlsx file with columns 'tex
 ### Training 
 
 The code can be run from the terminal using
-'python code/task.py -datadir INPUT_DIR [options]`
+python code/task.py -datadir INPUT_DIR [options]`
 where INPUT_DIR is the path to a directory containing the files 'train.csv' and 'val.csv'.
 Other optional options are: 
 

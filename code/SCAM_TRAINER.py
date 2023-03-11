@@ -110,6 +110,7 @@ class ScamTrainer:
         else:
             self.device = torch.device("cpu")
             print("No GPU available, CPU is used.")
+        
 
     def _preprocessing(
         self, dataset, feature_col="text", target_col="target_orig"
@@ -285,7 +286,10 @@ class ScamTrainer:
             if self.reinit_layers:
                 if self.reinit_layers > 0:
                     self._reinit_layer_weights()
-            self.model.cuda()
+            if torch.cuda.is_available():
+                self.model.cuda()
+            else: 
+                self.model.cpu()
             optimizer = AdamW(
                 self.model.parameters(),
                 lr=self.learning_rate,
@@ -326,6 +330,7 @@ class ScamTrainer:
                         labels=b_labels,
                         return_dict=True,
                     )
+                    
                     loss = result.loss
                     logits = result.logits
                     total_train_loss += loss.item()

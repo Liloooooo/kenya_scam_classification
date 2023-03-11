@@ -20,16 +20,52 @@ The original data is not provided here.
 
 In command line, where INPUT_PATH is the path to an .xlsx file with columns 'text' and 'target_orig' (Labels in 0/1 format):  
 
-`python data_preprocessing.py --input_path INPUT_PATH --output_dir OUTPUT_DIRECTORY`
+`python code/data_preprocessing.py --input_path INPUT_PATH --output_dir OUTPUT_DIRECTORY`
 
 ### Training 
+
+The code can be run from the terminal using
+'python code/task.py -datadir INPUT_DIR [options]`
+where INPUT_DIR is the path to a directory containing the files 'train.csv' and 'val.csv'.
+Other optional options are: 
+
+```
+-outdir <string>       path to directory where output files will be saved 
+                       [default: './model_save/']
+
+-model <string>        model architecture, choices are 'electra', 'roberta', 'bert'
+                       [default: 'electra']
+
+-lr <float>            learning rate
+                       [default: 2e-5]
+
+-batch <int>           batch size
+                       [default: 24]
+
+-warmup <float>        warmup ratio 
+                       [default: 0.01]
+                       
+-epochs <int>          number of training epochs 
+                       [default: 9]
+                                         
+-dropout <float>       dropout ratio in classification layer
+                       [default: 0.1]  
+
+-reinit <int>          number of top layers to re-initialize
+                       [default: 0] 
+                       
+-seeds <list>          list of random seeds, and from which best option is chosen when saving model
+                       [default: [80, 800, 8000]]
+```
+
+Alternatively, SCAM_TRAINER can be fitted using a dictionnary, for instance: 
 
 ```
 from SCAM_TRAINER import ScamTrainer
 import pandas as pd
 
-train = pd.read_csv('train.csv')
-val = pd.read_csv('val.csv')
+train = pd.read_csv(PATH_TO_TRAIN_FILE)
+val = pd.read_csv(PATH_TO_VALIDATION_FILE)
 
 args = {'model_type': 'electra',  
         'data': 'standard', 
@@ -43,6 +79,7 @@ args = {'model_type': 'electra',
 
 trainer = ScamTrainer(args)
 trainer.fit(train_dataset=train, val_dataset=val, seed=[80, 800, 8000])
+trainer.save_best_model(PATH_TO_SAVE_DIR)
 ```
 
 ### Evaluation/Prediction

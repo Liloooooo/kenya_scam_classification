@@ -11,3 +11,6 @@ best_model/
 # DS_Store
 .DS_Store
 code/.DS_Store
+
+# pychache 
+code/__pycache__/
